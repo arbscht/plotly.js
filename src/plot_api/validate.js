@@ -39,7 +39,7 @@ var isArray = Array.isArray;
  *  - {string} msg
  *      error message (shown in console in logger config argument is enable)
  */
-module.exports = function valiate(data, layout) {
+module.exports = function validate(data, layout) {
     var schema = PlotSchema.get(),
         errorList = [],
         gd = {};
