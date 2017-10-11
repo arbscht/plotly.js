@@ -18,20 +18,6 @@ function svgToImg(opts) {
         var Image = window.Image;
         var svg = opts.svg;
         var format = opts.format || 'png';
-
-        // IE only support svg
-        if(Lib.isIE() && format !== 'svg') {
-            var ieSvgError = new Error('Sorry IE does not support downloading from canvas. Try {format:\'svg\'} instead.');
-            reject(ieSvgError);
-            // eventually remove the ev
-            //  in favor of promises
-            if(!opts.promise) {
-                return ev.emit('error', ieSvgError);
-            } else {
-                return promise;
-            }
-        }
-
         var canvas = opts.canvas;
         var scale = opts.scale || 1;
         var w0 = opts.width || 300;
@@ -59,27 +45,46 @@ function svgToImg(opts) {
                 ctx.drawImage(img, 0, 0, w1, h1);
             }
 
-            switch(format) {
-                case 'jpeg':
-                    imgData = canvas.toDataURL('image/jpeg');
-                    break;
-                case 'png':
-                    imgData = canvas.toDataURL('image/png');
-                    break;
-                case 'webp':
-                    imgData = canvas.toDataURL('image/webp');
-                    break;
-                case 'svg':
-                    imgData = url;
-                    break;
-                default:
-                    var errorMsg = 'Image format is not jpeg, png, svg or webp.';
-                    reject(new Error(errorMsg));
+            try {
+                switch(format) {
+                    case 'jpeg':
+                        imgData = canvas.toDataURL('image/jpeg');
+                        break;
+                    case 'png':
+                        imgData = canvas.toDataURL('image/png');
+                        break;
+                    case 'webp':
+                        imgData = canvas.toDataURL('image/webp');
+                        break;
+                    case 'svg':
+                        imgData = url;
+                        break;
+                    default:
+                        var errorMsg = 'Image format is not jpeg, png, svg or webp.';
+                        reject(new Error(errorMsg));
+                        // eventually remove the ev
+                        //  in favor of promises
+                        if(!opts.promise) {
+                            return ev.emit('error', errorMsg);
+                        }
+                }
+            } catch (e) {
+                if (e.name === 'SecurityError' && Lib.isIE() && format !== 'svg') {
+                    var ieSvgError = new Error('Sorry IE does not support downloading from canvas. Try {format:\'svg\'} instead.');
+                    reject(ieSvgError);
                     // eventually remove the ev
                     //  in favor of promises
                     if(!opts.promise) {
-                        return ev.emit('error', errorMsg);
+                        return ev.emit('error', ieSvgError);
                     }
+                } else {
+                    reject(e);
+                    // eventually remove the ev
+                    //  in favor of promises
+                    if(!opts.promise) {
+                        return ev.emit('error', e);
+                    }
+                }
             }
             resolve(imgData);
             // eventually remove the ev

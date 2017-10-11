@@ -34,15 +34,6 @@ function downloadImage(gd, opts) {
             reject(new Error('Snapshotting already in progress.'));
         }
 
-        // see comments within svgtoimg for additional
-        //   discussion of problems with IE
-        //   can now draw to canvas, but CORS tainted canvas
-        //   does not allow toDataURL
-        //   svg format will work though
-        if(Lib.isIE() && opts.format !== 'svg') {
-            reject(new Error('Sorry IE does not support downloading from canvas. Try {format:\'svg\'} instead.'));
-        }
-
         gd._snapshotInProgress = true;
         var promise = toImage(gd, opts);
 
