@@ -51,13 +51,31 @@ var fileSaver = function(url, name) {
             resolve(name);
         }
 
-        // IE 10+ (native saveAs)
+        // MS IE 10+ or MS Edge (native saveAs)
         if(typeof navigator !== 'undefined' && navigator.msSaveBlob) {
-            // At this point we are only dealing with a SVG encoded as
-            // a data URL (since IE only supports SVG)
-            var encoded = url.split(/^data:image\/svg\+xml,/)[1];
-            var svg = decodeURIComponent(encoded);
-            navigator.msSaveBlob(new Blob([svg]), name);
+            // At this point we are dealing with MS IE saving a SVG
+            // encoded as a data URL (since IE only supports SVG),
+            // or we are dealing with MS Edge and any of the
+            // generally supported image formats, which may be SVG
+            // or base64-encoded.
+            var parts = url.split(/^data:([^,]+),/);
+            var contentType = parts[1];
+            var primaryContentType = contentType.split(/;/)[0];
+            var content = parts[2];
+
+            var saveData;
+            if(primaryContentType === 'image/svg+xml') {
+                saveData = decodeURIComponent(content);
+            } else {
+                var decoded = window.atob(content);
+                var n = decoded.length;
+                var saveData = new Uint8Array(n);
+                while(n--) {
+                    saveData[n] = decoded.charCodeAt(n);
+                }
+            }
+            var blob = new Blob([saveData], {"type": primaryContentType}); 
+            navigator.msSaveBlob(blob, name);
             resolve(name);
         }
 
